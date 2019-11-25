@@ -1,0 +1,67 @@
+apiVersion: v1               #specifies which K8s API to use for this object
+kind: Service                #specifies which kind of API object this section declares 
+metadata:                    #metada about the service
+  name: wordpress            #name of the service
+  labels:
+    app: wordpress           #declares a label to be able to reference this service with selector
+spec:                        #specifications describing the service 'wordpress'
+  ports:
+    - port: 80               #declares the service port
+  selector:
+    app: wordpress           #selector to target pods with the label "app = 'wordpress'"
+    tier: frontend           #selector to target pods with the label "tier = 'frontend'"
+  type: LoadBalancer         #defines the type of service deployed, could also be a NodePort
+---                          #indicates that the declaration of the service is done and below a new API object declaration starts
+apiVersion: v1
+kind: PersistentVolumeClaim  
+metadata:
+  name: wp-pv-claim
+  labels:
+    app: wordpress
+spec:
+  accessModes:              #defines how the volume can be accessed
+    - ReadWriteOnce         #the volume can be mounted as read-write by a single node
+  resources:
+    requests:
+      storage: 20Gi         #specifies the amount of storage needed by this claim
+---
+apiVersion: apps/v1         # for versions before 1.9.0 use apps/v1beta2
+kind: Deployment
+metadata:
+  name: wordpress
+  labels:
+    app: wordpress
+spec:
+  selector:                 #selector to target some API objects provided with specific labels
+    matchLabels:            #this is the way the selector will match the labels it requests with the object labels, it could be matchexpression to allow more complex criterias
+      app: wordpress
+      tier: frontend        #the API objects with label "app = 'wordpress'" and "tier = 'frontend'" will be targeted
+  strategy:                 #the strategy defines what happens to the failed pods
+    type: Recreate          #This strategy means that if a pod dies it will be recreated in the cluster
+  template:                 #defines the deployment
+    metadata:           
+      labels:
+        app: wordpress
+        tier: frontend
+    spec:                               #specification of the pods
+      containers:                       #declaration of the container that will run in the pods
+      - image: wordpress:4.8-apache     #image to build the container from
+        name: wordpress                 #begining of the pod's name(s)
+        env:                            #starts the list of environment variables
+        - name: WORDPRESS_DB_HOST       #name of the first env variable
+          value: wordpress-mysql        #value of the first env variable
+        - name: WORDPRESS_DB_PASSWORD   #name of the second env variable
+          valueFrom:                    #defines that the value will be fetched and not provided directly here
+            secretKeyRef:               #indicates that the value of this env variable will be retrieved from the secrets
+              name: mysql-pass          #provides the name of the secret to get the value from
+              key: password             #provides which key in the secret is requested
+        ports:                          #specification for the pods's port
+        - containerPort: 80             #defines the port to use on the containers
+          name: wordpress               #defines the port's name
+        volumeMounts:                          #declares where the volume should be 
+        - name: wordpress-persistent-storage   #declares the name of the volume to mount
+          mountPath: /var/www/html             #declares the path to which deploy the volume
+      volumes:                                 #information about the volume itself
+      - name: wordpress-persistent-storage     #name of the volume
+        persistentVolumeClaim:                 #connects the volume to the volume claim
+          claimName: wp-pv-claim               #name of the volume claim linked to this volume
