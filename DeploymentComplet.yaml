@@ -33,8 +33,8 @@ metadata:
     app: wordpress
 spec:
   selector:                 #selector to target some API objects provided with specific labels
-    matchLabels:            #this is the way the selector will match the labels it requests with the object labels, it could be matchexpression to allow more complex criterias
-      app: wordpress
+    matchLabels:            #this is the way the selector will match the labels it requests with the object labels, 
+      app: wordpress        #it could be a matchexpression to allow more complex filtering criterias
       tier: frontend        #the API objects with label "app = 'wordpress'" and "tier = 'frontend'" will be targeted
   strategy:                 #the strategy defines what happens to the failed pods
     type: Recreate          #This strategy means that if a pod dies it will be recreated in the cluster
