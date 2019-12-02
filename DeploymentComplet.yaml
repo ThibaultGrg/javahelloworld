@@ -1,17 +1,17 @@
-apiVersion: v1               #specifies which K8s API to use for this object
-kind: Service                #specifies which kind of API object this section declares 
-metadata:                    #metada about the service
-  name: wordpress            #name of the service
-  labels:
-    app: wordpress           #declares a label to be able to reference this service with selector
-spec:                        #specifications describing the service 'wordpress'
+apiVersion: v1               #spécifie quelle version de l'API est utilisée pour créer cet objet
+kind: Service                #spécifie quel type d'objet K8s est déclaré ici
+metadata:                    #section des metadata concernant l'objet déclaré
+  name: wordpress            #nom du service
+  labels:                    #liste de label(s) attribué(s) a ce service
+    app: wordpress           #déclare un label de nom 'app' avec la valeur 'wordpress'
+spec:                        #spécifications décrivant le service 'wordpress'
   ports:
-    - port: 80               #declares the service port
+    - port: 80               #déclare le port du service
   selector:
-    app: wordpress           #selector to target pods with the label "app = 'wordpress'"
-    tier: frontend           #selector to target pods with the label "tier = 'frontend'"
-  type: LoadBalancer         #defines the type of service deployed, could also be a NodePort
----                          #indicates that the declaration of the service is done and below a new API object declaration starts
+    app: wordpress           #sélecteur permettant de cibler les pods ayant le label "app = 'wordpress'"
+    tier: frontend           #idem pour le label "tier = 'frontend'"
+  type: LoadBalancer         #défini quel type de service est déclaré
+---                          #indique que la déclaration du service est finie et que la déclaration d'un autre objet débute
 apiVersion: v1
 kind: PersistentVolumeClaim  
 metadata:
@@ -19,49 +19,49 @@ metadata:
   labels:
     app: wordpress
 spec:
-  accessModes:              #defines how the volume can be accessed
-    - ReadWriteOnce         #the volume can be mounted as read-write by a single node
+  accessModes:              #défini la règle d'accès au volume
+    - ReadWriteOnce         #le volume peut être monté en lecture-écriture sur un seul node
   resources:
     requests:
-      storage: 20Gi         #specifies the amount of storage needed by this claim
+      storage: 20Gi         #spécifie la quantité de stockage requise pour ce PVC
 ---
-apiVersion: apps/v1         # for versions before 1.9.0 use apps/v1beta2
+apiVersion: apps/v1         
 kind: Deployment
 metadata:
   name: wordpress
   labels:
     app: wordpress
 spec:
-  selector:                 #selector to target some API objects provided with specific labels
-    matchLabels:            #this is the way the selector will match the labels it requests with the object labels, 
-      app: wordpress        #it could be a matchexpression to allow more complex filtering criterias
-      tier: frontend        #the API objects with label "app = 'wordpress'" and "tier = 'frontend'" will be targeted
-  strategy:                 #the strategy defines what happens to the failed pods
-    type: Recreate          #This strategy means that if a pod dies it will be recreated in the cluster
-  template:                 #defines the deployment
+  selector:                 #sélecteur permettant de cibler les pods
+    matchLabels:            #défini la règle de sélection, ici les pods possédants tous les labels déclarés dans cette section seront  
+      app: wordpress        #ciblés par ce déploiement
+      tier: frontend        #les pods ayant les labels "app = 'wordpress'" et "tier = 'frontend'" sont ciblés
+  strategy:                 #défini la stratégie de mise a jour des pods dans ce déploiement
+    type: Recreate          #arrête tous les pods ayant a être mis a jour avant de tous les recréer
+  template:                 #défini le déploiement
     metadata:           
       labels:
         app: wordpress
         tier: frontend
-    spec:                               #specification of the pods
-      containers:                       #declaration of the container that will run in the pods
-      - image: wordpress:4.8-apache     #image to build the container from
-        name: wordpress                 #begining of the pod's name(s)
-        env:                            #starts the list of environment variables
-        - name: WORDPRESS_DB_HOST       #name of the first env variable
-          value: wordpress-mysql        #value of the first env variable
-        - name: WORDPRESS_DB_PASSWORD   #name of the second env variable
-          valueFrom:                    #defines that the value will be fetched and not provided directly here
-            secretKeyRef:               #indicates that the value of this env variable will be retrieved from the secrets
-              name: mysql-pass          #provides the name of the secret to get the value from
-              key: password             #provides which key in the secret is requested
-        ports:                          #specification for the pods's port
-        - containerPort: 80             #defines the port to use on the containers
-          name: wordpress               #defines the port's name
-        volumeMounts:                          #declares where the volume should be 
-        - name: wordpress-persistent-storage   #declares the name of the volume to mount
-          mountPath: /var/www/html             #declares the path to which deploy the volume
-      volumes:                                 #information about the volume itself
-      - name: wordpress-persistent-storage     #name of the volume
-        persistentVolumeClaim:                 #connects the volume to the volume claim
-          claimName: wp-pv-claim               #name of the volume claim linked to this volume
+    spec:                               #spécification du/des pod(s)
+      containers:                       #déclaration du conteneur qui va être éxécuté dans le(s) pod(s)
+      - image: wordpress:4.8-apache     #image utilisée pour créer les conteneurs
+        name: wordpress                 #début du nom du/des pods
+        env:                            #liste des variables d'environnement
+        - name: WORDPRESS_DB_HOST       #nom de la première variable d'environnement
+          value: wordpress-mysql        #valeur de cette variable
+        - name: WORDPRESS_DB_PASSWORD   #nom de la deuxième variable d'environnement
+          valueFrom:                    #défini que la valeur de cette variable n'est pas fournie directement ici
+            secretKeyRef:               #indique que la valeur va provenir d'un secret
+              name: mysql-pass          #fourni le nom du secret qui contient la valeur
+              key: password             #indique quelle clée du secret contient la valeur
+        ports:                          #déclaration des ports du/des conteneurs
+        - containerPort: 80             #défini sur quel port les conteneurs vont pouvoir communiquer
+          name: wordpress               #défini le nom du port utilisé
+        volumeMounts:                          #déclare ou le volume doit êre monté dans le conteneur
+        - name: wordpress-persistent-storage   #spécifie le nom du volume à utiliser
+          mountPath: /var/www/html             #spécifie le chemin d'accès au volume
+      volumes:                                 #informations a propos du volume
+      - name: wordpress-persistent-storage     #nom du volume
+        persistentVolumeClaim:                 #permet de lier le volume a un PVC
+          claimName: wp-pv-claim               #nom du PersistantVolumeClaim lié a ce volume
