@@ -3,7 +3,7 @@ kind: Service                #spécifie quel type d'objet K8s est déclaré ici
 metadata:                    #section des metadata concernant l'objet déclaré
   name: wordpress            #nom du service
   labels:                    #liste de label(s) attribué(s) a ce service
-    app: wordpress           #déclare un label de nom 'app' avec la valeur 'wordpress'
+    app: wordpress           #déclare un label nommé 'app' avec la valeur 'wordpress'
 spec:                        #spécifications décrivant le service 'wordpress'
   ports:
     - port: 80               #déclare le port du service
@@ -37,7 +37,7 @@ spec:
       app: wordpress        #ciblés par ce déploiement
       tier: frontend        #les pods ayant les labels "app = 'wordpress'" et "tier = 'frontend'" sont ciblés
   strategy:                 #défini la stratégie de mise a jour des pods dans ce déploiement
-    type: Recreate          #arrête tous les pods ayant a être mis a jour avant de tous les recréer
+    type: Recreate          #arrête tous les pods qui doivent a être mis a jour avant de tous les recréer
   template:                 #défini le déploiement
     metadata:           
       labels:
@@ -55,11 +55,11 @@ spec:
             secretKeyRef:               #indique que la valeur va provenir d'un secret
               name: mysql-pass          #fourni le nom du secret qui contient la valeur
               key: password             #indique quelle clée du secret contient la valeur
-        ports:                          #déclaration des ports du/des conteneurs
+        ports:                          #déclaration des ports des conteneurs
         - containerPort: 80             #défini sur quel port les conteneurs vont pouvoir communiquer
           name: wordpress               #défini le nom du port utilisé
-        volumeMounts:                          #déclare ou le volume doit êre monté dans le conteneur
-        - name: wordpress-persistent-storage   #spécifie le nom du volume à utiliser
+        volumeMounts:                          #déclare où le volume doit êre monté dans le conteneur
+        - name: wordpress-persistent-storage   #spécifie le nom du volume à monter
           mountPath: /var/www/html             #spécifie le chemin d'accès au volume
       volumes:                                 #informations a propos du volume
       - name: wordpress-persistent-storage     #nom du volume
